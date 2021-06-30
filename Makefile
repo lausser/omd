@@ -9,6 +9,8 @@ PACKAGES=freetds \
 	 perl-modules \
          influxdb \
 	 naemon \
+	 nagflux \
+	 dokuwiki \
          apache-omd \
          example \
          logos \
