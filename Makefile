@@ -1,7 +1,8 @@
 SHELL = /bin/bash
 # You can select a subset of the packages by overriding this
 # variale, e.g. make PACKAGES='nagios rrdtool' pack
-PACKAGES=go-1.4 \
+PACKAGES=freetds \
+	 go-1.4 \
          go-1.14 \
          go-1.15 \
          go-1.16 \
