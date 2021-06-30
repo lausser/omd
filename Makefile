@@ -6,6 +6,7 @@ PACKAGES=go-1.4 \
          go-1.15 \
          go-1.16 \
          influxdb \
+	 naemon \
          apache-omd \
          example \
          logos \
