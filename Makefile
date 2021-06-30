@@ -5,6 +5,7 @@ PACKAGES=go-1.4 \
          go-1.14 \
          go-1.15 \
          go-1.16 \
+	 perl-modules \
          influxdb \
 	 naemon \
          apache-omd \
