@@ -2,21 +2,31 @@ SHELL = /bin/bash
 # You can select a subset of the packages by overriding this
 # variale, e.g. make PACKAGES='nagios rrdtool' pack
 PACKAGES=freetds \
-	 go-1.4 \
+         perl-modules \
+         go-1.4 \
          go-1.14 \
          go-1.15 \
-         go-1.16 \
-	 perl-modules \
          influxdb \
-	 naemon \
-	 nagflux \
-	 dokuwiki \
+         nagflux \
+         python-modules \
          apache-omd \
+         mod_python \
+         check_multi \
+         dokuwiki \
          example \
+         jmx4perl \
+         mysql-omd \
+         naemon \
+         naemon-livestatus \
          logos \
+         nrpe \
+         nsca \
          omd \
          monitoring-plugins \
          check_plugins \
+         pnp4nagios \
+         pnp4nagios4 \
+         rrdtool \
          thruk \
          thruk-plugins \
          thruk-consol-theme \
@@ -30,6 +40,8 @@ PACKAGES=freetds \
          patch \
          nail \
          notifications-tt \
+         ansible \
+         coshsh \
          lmd \
          prometheus \
          prometheus_snmp_exporter \
@@ -37,10 +49,15 @@ PACKAGES=freetds \
          prometheus_alertmanager \
          prometheus_blackbox_exporter \
          prometheus_pushgateway \
+         telegraf \
+         thanos \
+         snmptrapd \
+         downtime-api \
+         dacretain \
          grafana-pnp-datasource \
          grafana-thruk-datasource \
-         victoriametrics \
-	 xinetd
+         sakuli\
+         victoriametrics
 
 include Makefile.omd
 
