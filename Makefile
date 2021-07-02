@@ -16,6 +16,7 @@ PACKAGES=freetds \
          example \
          jmx4perl \
          mysql-omd \
+	 icinga2 \
          naemon \
          naemon-livestatus \
          logos \
