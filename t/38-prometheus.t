@@ -13,7 +13,7 @@ BEGIN {
     use lib "$FindBin::Bin/lib/lib/perl5";
 }
 
-plan( tests => 99 );
+plan( tests => 104 );
 
 
 ##################################################
@@ -44,6 +44,8 @@ unless($blackbox_icmp) {
     diag(qx(sysctl net.ipv4.ping_group_range));
     diag(qx(printf '%s(%s): ' capabilities $be; getcap $be));
 };
+# grafana can take some time to start it's webserver
+TestUtils::test_command({ cmd => "/bin/su - $site -c 'cat var/log/grafana/grafana.log'", like => '/HTTP Server Listen/', waitfor => 'HTTP\ Server\ Listen' });
 TestUtils::test_command({ cmd => "/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 --onredirect=follow -a omdadmin:omd -u \"/$site/grafana/api/datasources/proxy/2/api/v1/query_range?query=go_goroutines&start=1535520675&end=1535542290&step=15\" -s \"success\"'", like => '/HTTP OK:/', waitfor => 'OK:' });
 
 # test reload

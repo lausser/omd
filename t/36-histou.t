@@ -51,6 +51,7 @@ if($page->{'content'} !~ m/$host-$service/mx) {
     TestUtils::bail_out_clean("histou did not work");
 }
 
+TestUtils::test_command({ cmd => "/bin/su - $site -c 'cat var/log/grafana/grafana.log'", like => '/HTTP Server Listen/', waitfor => 'HTTP\ Server\ Listen' });
 TestUtils::test_url({
     url            => "http://localhost/$site/grafana/public/dashboards/histou.js",
     auth           => "OMD Monitoring Site $site:omdadmin:omd",
