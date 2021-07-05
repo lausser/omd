@@ -34,7 +34,7 @@ TestUtils::test_command({ cmd => $omd_bin." start $site", like => ['/Starting pr
                                                                    '/Starting alertmanager\.+OK/',
                                                                    '/Starting Grafana\.+OK/',
                                                                   ]});
-TestUtils::test_command({ cmd => "/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 --onredirect=follow -a omdadmin:omd -u \"/$site/prometheus\" -s \"<title>Prometheus Time Series Collection and Processing Server</title>\"'", like => '/HTTP OK:/', waitfor => 'OK:' });
+TestUtils::test_command({ cmd => "/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 --onredirect=follow -a omdadmin:omd -u \"/$site/prometheus\" -s \"<title>Prometheus Time Series Collection and Processing Server</title>\"'", like => '/HTTP OK:/', waitfor => 'OK:', maxwait => 180 });
 TestUtils::test_command({ cmd => "/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 --onredirect=follow -a omdadmin:omd -u \"/$site/alertmanager\" -s \"<title>Alertmanager</title>\"'", like => '/HTTP OK:/', waitfor => 'OK:' });
 TestUtils::test_command({ cmd => "/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 -p 9115 -u \"/metrics\" -s \"process_open_fds\"'", like => '/HTTP OK:/' });
 my $blackbox_icmp = TestUtils::test_command({ cmd => qq[/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 -p 9115 -u "/probe?module=icmp&target=127.0.0.1" -s "probe_success 1"'], like => '/HTTP OK:/' });
@@ -45,7 +45,7 @@ unless($blackbox_icmp) {
     diag(qx(printf '%s(%s): ' capabilities $be; getcap $be));
 };
 # grafana can take some time to start it's webserver
-TestUtils::test_command({ cmd => "/bin/su - $site -c 'cat var/log/grafana/grafana.log'", like => '/HTTP Server Listen/', waitfor => 'HTTP\ Server\ Listen' });
+TestUtils::test_command({ cmd => "/bin/su - $site -c 'cat var/log/grafana/grafana.log'", like => '/HTTP Server Listen/', waitfor => 'HTTP\ Server\ Listen', maxwait => 180 });
 TestUtils::test_command({ cmd => "/bin/su - $site -c 'lib/monitoring-plugins/check_http -t 60 -H 127.0.0.1 --onredirect=follow -a omdadmin:omd -u \"/$site/grafana/api/datasources/proxy/2/api/v1/query_range?query=go_goroutines&start=1535520675&end=1535542290&step=15\" -s \"success\"'", like => '/HTTP OK:/', waitfor => 'OK:' });
 
 # test reload
