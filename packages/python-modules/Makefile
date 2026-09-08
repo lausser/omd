@@ -153,7 +153,7 @@ endef
 
 # Install wheels
 define INSTALL_WHEELS
-	$(PIP) install --no-cache-dir --no-index --no-deps --find-links=$(WHEELSDIR) --target=$(BUILDDEST) $(WHEELSDIR)/*.whl
+	$(PIP) install --no-cache-dir --no-index --no-deps --find-links=$(WHEELSDIR) --target=$(BUILDDEST) --upgrade $(WHEELSDIR)/*.whl
 endef
 
 # Build wheel from source
@@ -184,7 +184,7 @@ define BUILD_WHEEL
 			$(UV_BUILD) --out-dir=$(WHEELSDIR) --no-index --find-links=$(WHEELSDIR) "$$src_file"; \
 		fi; \
 		echo "  Installing $(1) into build env"; \
-		$(PIP) install --no-cache-dir --no-index --no-deps --find-links=$(WHEELSDIR) --target=$(BUILDDEST) "$(1)"; \
+		$(PIP) install --no-cache-dir --no-index --no-deps --target=$(BUILDDEST) --upgrade $(WHEELSDIR)/$${name}-$${version}-*.whl; \
 	else \
 		echo "ERROR: source not found for $(1) in $(SRCDIR)"; \
 		exit 1; \
