@@ -15,8 +15,12 @@ SRCDIR=$(shell pwd)/src
 
 UV_VERSION=0.12.10
 UV=$(shell pwd)/bin/uv
+# Pin uv to the same interpreter as `python3` (used for PYTHON_V and PIP).
+# Otherwise uv auto-selects the newest managed Python (e.g. 3.12), which
+# mismatches the vendored toolchain (setuptools 59.6.0) and lacks distutils.
+SYSPYTHON=$(shell which python3)
 UV_PIP=$(UV) pip
-UV_BUILD=$(UV) build --wheel --no-build-isolation
+UV_BUILD=$(UV) build --wheel --no-build-isolation --python $(SYSPYTHON)
 PIP=python3 -m pip
 
 HAS_PYTHON_307_OR_NEWER := $(shell \
@@ -113,11 +117,15 @@ OVERRIDES_312 = \
 	paramiko==3.5.0 \
 	requests==2.33.0 \
 	urllib3==2.7.0 \
-	mysql-connector-python==9.5.0 \
 	idna==3.18 \
 	pyasn1==0.6.4 \
 	pyparsing==3.3.2 \
 	flit-core==3.12.0
+
+# Extra packages only installed on Python 3.12+ (pure-python wheels).
+# mysql-connector-python 9.5.0 requires Python >=3.9, so it must not be
+# installed on CentOS 7 / Python 3.6.
+MODULES_312_EXTRA = mysql-connector-python==9.5.0
 
 export PIP_ROOT_USER_ACTION=ignore
 
@@ -167,14 +175,16 @@ define BUILD_WHEEL
 		if [[ "$$src_file" == *.whl ]]; then \
 			cp "$$src_file" $(WHEELSDIR)/; \
 		elif [[ "$(1)" =~ pymssql ]]; then \
-			if [ `uname -m` = 'armv7l' ]; then export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1; else export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=0; fi; \
-			LINK_KRB5=NO CFLAGS="${CFLAGS} -I $(FREETDS)/include -L $(FREETDS)/lib" $(UV_BUILD) --out-dir=$(WHEELSDIR) --find-links=$(WHEELSDIR) "$$src_file"; \
+			if [ ! -f $(FREETDS)/include/sybdb.h ]; then export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1; elif [ `uname -m` = 'armv7l' ]; then export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1; else export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=0; fi; \
+			LINK_KRB5=NO CFLAGS="-std=c99 ${CFLAGS} -I $(FREETDS)/include -L $(FREETDS)/lib" $(UV_BUILD) --out-dir=$(WHEELSDIR) --no-index --find-links=$(WHEELSDIR) "$$src_file"; \
 		elif [[ "$(1)" =~ tomli ]]; then \
 			(cd $(SRCDIR) && (tar zxf "$$(basename $$src_file)" --no-same-owner || :) && cd ./tomli-*/ && python3 -c 'from setuptools import setup; setup(name="tomli", packages=["tomli"], package_data={"": ["*"]}, version="1.2.3")' bdist_wheel); \
 			mv ./src/tomli-*/dist/*.whl $(WHEELSDIR); rm -rf ./src/tomli-*/; \
 		else \
 			$(UV_BUILD) --out-dir=$(WHEELSDIR) --no-index --find-links=$(WHEELSDIR) "$$src_file"; \
 		fi; \
+		echo "  Installing $(1) into build env"; \
+		$(PIP) install --no-cache-dir --no-index --no-deps --find-links=$(WHEELSDIR) --target=$(BUILDDEST) "$(1)"; \
 	else \
 		echo "ERROR: source not found for $(1) in $(SRCDIR)"; \
 		exit 1; \
@@ -185,17 +195,21 @@ build:
 	mkdir -p $(WHEELSDIR) $(BUILDDEST)
 	export PYTHONPATH=$(BUILDDEST):$$PYTHONPATH; \
 	export CFLAGS="${CFLAGS} -std=c99"; \
+	export UV_OFFLINE=1; \
+	export PIP_NO_INDEX=1; \
+	export UV_PYTHON=$(SYSPYTHON); \
 	unset http_proxy https_proxy ftp_proxy; \
 	set -e; \
 	\
 	# Step 1: Apply overrides \
-	BASE_DL_OVERRIDES=$$(for pkg in $(BASE_DL); do name=$$(echo $$pkg | sed 's/==.*//'); found=false; for ovr in $(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(OVERRIDES_312),$(if $(filter true,$(HAS_PYTHON_307_OR_NEWER)),$(OVERRIDES_37),)); do oname=$$(echo $$ovr | sed 's/==.*//'); if [ "$$oname" = "$$name" ]; then echo $$ovr; found=true; break; fi; done; if [ "$$found" = "false" ]; then echo $$pkg; fi; done); \
-	MODULES_DL_OVERRIDES=$$(for pkg in $(MODULES_DL); do name=$$(echo $$pkg | sed 's/==.*//'); found=false; for ovr in $(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(OVERRIDES_312),$(if $(filter true,$(HAS_PYTHON_307_OR_NEWER)),$(OVERRIDES_37),)); do oname=$$(echo $$ovr | sed 's/==.*//'); if [ "$$oname" = "$$name" ]; then echo $$ovr; found=true; break; fi; done; if [ "$$found" = "false" ]; then echo $$pkg; fi; done); \
-	MODULES_BUILD_OVERRIDES=$$(for pkg in $(MODULES_BUILD); do name=$$(echo $$pkg | sed 's/==.*//'); found=false; for ovr in $(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(OVERRIDES_312),$(if $(filter true,$(HAS_PYTHON_307_OR_NEWER)),$(OVERRIDES_37),)); do oname=$$(echo $$ovr | sed 's/==.*//'); if [ "$$oname" = "$$name" ]; then echo $$ovr; found=true; break; fi; done; if [ "$$found" = "false" ]; then echo $$pkg; fi; done); \
+	BASE_DL_OVERRIDES=$$(for pkg in $(BASE_DL); do name=$$(echo $$pkg | sed 's/==.*//'); found=false; for ovr in $(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(OVERRIDES_312) $(OVERRIDES_37),$(if $(filter true,$(HAS_PYTHON_307_OR_NEWER)),$(OVERRIDES_37),)); do oname=$$(echo $$ovr | sed 's/==.*//'); if [ "$$oname" = "$$name" ]; then echo $$ovr; found=true; break; fi; done; if [ "$$found" = "false" ]; then echo $$pkg; fi; done); \
+	MODULES_DL_OVERRIDES=$$(for pkg in $(MODULES_DL); do name=$$(echo $$pkg | sed 's/==.*//'); found=false; for ovr in $(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(OVERRIDES_312) $(OVERRIDES_37),$(if $(filter true,$(HAS_PYTHON_307_OR_NEWER)),$(OVERRIDES_37),)); do oname=$$(echo $$ovr | sed 's/==.*//'); if [ "$$oname" = "$$name" ]; then echo $$ovr; found=true; break; fi; done; if [ "$$found" = "false" ]; then echo $$pkg; fi; done); \
+	MODULES_BUILD_OVERRIDES=$$(for pkg in $(MODULES_BUILD); do name=$$(echo $$pkg | sed 's/==.*//'); found=false; for ovr in $(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(OVERRIDES_312) $(OVERRIDES_37),$(if $(filter true,$(HAS_PYTHON_307_OR_NEWER)),$(OVERRIDES_37),)); do oname=$$(echo $$ovr | sed 's/==.*//'); if [ "$$oname" = "$$name" ]; then echo $$ovr; found=true; break; fi; done; if [ "$$found" = "false" ]; then echo $$pkg; fi; done); \
 	\
 	# Step 2: Build all packages from src/ (offline) \
 	echo "=== Building all packages from src/ ==="; \
-	for pkg in $$BASE_DL_OVERRIDES $$MODULES_DL_OVERRIDES $$MODULES_BUILD_OVERRIDES; do \
+	MODULES_EXTRA="$(if $(filter true,$(HAS_PYTHON_312_OR_NEWER)),$(MODULES_312_EXTRA),)"; \
+	for pkg in $$BASE_DL_OVERRIDES $$MODULES_DL_OVERRIDES $$MODULES_BUILD_OVERRIDES $$MODULES_EXTRA; do \
 		$(call BUILD_WHEEL,$$pkg); \
 	done; \
 	\
