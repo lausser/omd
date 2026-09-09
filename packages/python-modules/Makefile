@@ -177,6 +177,8 @@ define BUILD_WHEEL
 		elif [[ "$(1)" =~ pymssql ]]; then \
 			if [ ! -f $(FREETDS)/include/sybdb.h ]; then export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1; elif [ `uname -m` = 'armv7l' ]; then export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=1; else export PYMSSQL_BUILD_WITH_BUNDLED_FREETDS=0; fi; \
 			LINK_KRB5=NO CFLAGS="-std=c99 ${CFLAGS} -I $(FREETDS)/include -L $(FREETDS)/lib" $(UV_BUILD) --out-dir=$(WHEELSDIR) --no-index --find-links=$(WHEELSDIR) "$$src_file"; \
+		elif [[ "$(1)" =~ [Pp]y[Yy][Aa][Mm][Ll] ]]; then \
+			PYYAML_FORCE_LIBYAML=0 $(UV_BUILD) --out-dir=$(WHEELSDIR) --no-index --find-links=$(WHEELSDIR) "$$src_file"; \
 		elif [[ "$(1)" =~ tomli ]]; then \
 			(cd $(SRCDIR) && (tar zxf "$$(basename $$src_file)" --no-same-owner || :) && cd ./tomli-*/ && python3 -c 'from setuptools import setup; setup(name="tomli", packages=["tomli"], package_data={"": ["*"]}, version="1.2.3")' bdist_wheel); \
 			mv ./src/tomli-*/dist/*.whl $(WHEELSDIR); rm -rf ./src/tomli-*/; \
@@ -249,7 +251,12 @@ upstream:
 	@echo "==> Downloading uv $(UV_VERSION) into bin/uv"; case $$(uname -m) in x86_64)  UV_TARGET=x86_64-unknown-linux-gnu;; aarch64) UV_TARGET=aarch64-unknown-linux-gnu;; armv7l)  UV_TARGET=armv7-unknown-linux-gnueabihf;; *) echo "unsupported arch '$$(uname -m)' for uv"; exit 1;; esac; curl -fsSL "https://github.com/astral-sh/uv/releases/download/$(UV_VERSION)/uv-$${UV_TARGET}.tar.gz" -o /tmp/uv-dl.tgz; tar -xzf /tmp/uv-dl.tgz -C /tmp; install -m 0755 /tmp/uv-$${UV_TARGET}/uv bin/uv; rm -rf /tmp/uv-dl.tgz /tmp/uv-$${UV_TARGET}; bin/uv --version
 	set -e; cd src && \
 	export WHEELSDIR=$$(realpath ../wheels); \
-	for M in $(MODULES_DL) $(MODULES_BUILD); do \
+	for M in $(MODULES_DL); do \
+	    MODULE=$$(echo $$M | sed -e 's/.tar.gz//g' -e 's/.zip//g' -e 's/==.*//'); \
+	    VERSION=$$(echo $$M | sed "s/^.*==//"); \
+	    $(PIP) download --find-links=$${WHEELSDIR} --progress-bar off --no-deps -d . $${MODULE}==$${VERSION}; \
+	done; \
+	for M in $(MODULES_BUILD); do \
 	    MODULE=$$(echo $$M | sed -e 's/.tar.gz//g' -e 's/.zip//g' -e 's/==.*//'); \
 	    VERSION=$$(echo $$M | sed "s/^.*==//"); \
 	    $(PIP) download --find-links=$${WHEELSDIR} --no-binary :all: --progress-bar off --no-deps -d . $${MODULE}==$${VERSION}; \
