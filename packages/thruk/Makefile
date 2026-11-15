@@ -5,8 +5,8 @@ CHANGELOG = https://github.com/sni/thruk/blob/master/Changes
 VERSION   = 3.30
 DIR       = $(NAME)-$(VERSION)
 PERLARCH  = $(shell $(PERL) -e 'use Config; print $$Config{archname}')
-GITURL    = github.com/sni/thruk
-BRANCH    = master
+GITURL    = github.com/lausser/thruk
+BRANCH    = playwright
 
 .PHONY: skel
 
