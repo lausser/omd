@@ -1,0 +1,4 @@
+chrome-headless-shell-linux64/
+*.zip
+*.zip.tmp
+skel/etc/profile.d/thruk_browser.sh

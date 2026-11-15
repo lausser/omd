@@ -1,7 +1,6 @@
 include ../../Makefile.omd
 
 NAME     = node
-# adjust t/52-node-modules-audit when bumping this version
 VERSION  = 26.13.0
 SHELL    = /bin/bash
 

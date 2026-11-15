@@ -37,7 +37,7 @@ TestUtils::test_command({ cmd => "/bin/su - $site -c 'echo \"slow_page_log_thres
 TestUtils::test_command({ cmd => $omd_bin." config $site set DEFAULT_GUI thruk" });
 TestUtils::test_command({ cmd => $omd_bin." start $site" });
 
-# increase wait time for puppeteer related commands
+# increase wait time for the browser used for pdf and grafana exports
 TestUtils::test_command({ cmd => "/bin/su - $site -c 'echo \"WAIT_TIMEOUT=120\" >> etc/environment'" });
 TestUtils::test_command({ cmd => "/bin/su - $site -c 'echo \"START_TIMEOUT=120\" >> etc/environment'" });
 
