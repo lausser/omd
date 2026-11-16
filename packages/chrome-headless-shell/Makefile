@@ -7,8 +7,10 @@ include ../../Makefile.omd
 NAME     = chrome-headless-shell
 SHELL    = /bin/bash
 VERSION  = 147.0.7727.117
+# 121.0.6100.0 is the last version which runs on rhel 7. The comment must not
+# follow the value on the same line: make would keep the space before it.
 ifeq ($(DISTRO_CODE),el7)
-  VERSION = 121.0.6100.0 # last version which runs on rhel 7
+  VERSION = 121.0.6100.0
 endif
 ARCH     = $(shell uname -m)
 DIR      = chrome-headless-shell-linux64
