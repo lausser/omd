@@ -33,8 +33,8 @@ my $tests = [
   { cmd => "/bin/su - $site -c 'share/thruk/script/html2pdf.sh --selftest'", like => ['/^sandbox: (on|off)$/m', '/rendering test OK/'] },
   { cmd => "/bin/su - $site -c 'share/thruk/script/html2pdf.sh http://localhost:5000/".$site."/thruk/cgi-bin/remote.cgi tmp/test.pdf'", like => '/^$/' },
   { cmd => "/bin/su - $site -c 'file tmp/test.pdf'", like => '/PDF document/' },
-  # no NodeJS module tree is shipped any more
-  { cmd => "/bin/su - $site -c 'test ! -e lib/node_modules && echo gone'", like => '/^gone$/' },
+  # the puppeteer module is not shipped any more (lib/node_modules/npm comes with packages/node)
+  { cmd => "/bin/su - $site -c 'test ! -e lib/node_modules/puppeteer && echo gone'", like => '/^gone$/' },
 ];
 for my $test (@{$tests}) {
     TestUtils::test_command($test) || diag(`/usr/bin/env; /bin/su - $site -c '/usr/bin/env'`);
