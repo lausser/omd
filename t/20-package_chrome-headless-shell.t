@@ -37,7 +37,7 @@ my $tests = [
   { cmd => "/bin/su - $site -c 'test ! -e lib/node_modules/puppeteer && echo gone'", like => '/^gone$/' },
 ];
 for my $test (@{$tests}) {
-    TestUtils::test_command($test) || diag(`/usr/bin/env; /bin/su - $site -c '/usr/bin/env'`);
+    TestUtils::test_command($test);
 }
 
 ##################################################
