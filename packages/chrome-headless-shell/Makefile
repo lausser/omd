@@ -23,7 +23,9 @@ URL      = https://storage.googleapis.com/chrome-for-testing-public/$(VERSION)/l
 build:
 ifeq ($(ARCH),x86_64)
 	rm -rf $(DIR)
-	test -s $(ZIP) || curl -fL --retry 3 -o $(ZIP).tmp $(URL) || wget -O $(ZIP).tmp $(URL)
+	# a build environment may point SSL_CERT_FILE at a private ca (e.g. of a
+	# cache proxy); that would replace the system ca bundle for this download
+	test -s $(ZIP) || env -u SSL_CERT_FILE curl -fL --retry 3 -o $(ZIP).tmp $(URL) || env -u SSL_CERT_FILE wget -O $(ZIP).tmp $(URL)
 	test -s $(ZIP) || mv $(ZIP).tmp $(ZIP)
 	unzip -q $(ZIP)
 	test -x $(DIR)/chrome-headless-shell
